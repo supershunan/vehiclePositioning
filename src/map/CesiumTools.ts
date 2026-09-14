@@ -121,7 +121,7 @@ export class CesiumTools {
                 );
             }
             if (this.orbiting) {
-                this.orbitHeading += 0.000005 * Math.max(0.25, Math.abs(clock.multiplier));
+                this.orbitHeading += 0.00035 * Math.max(0.25, Math.abs(0));
                 this.viewer.camera.lookAt(
                     this.mineBounds.center,
                     new Cesium.HeadingPitchRange(
@@ -353,7 +353,7 @@ export class CesiumTools {
         ) {
             const duration = await this.loadTargets(targets, true);
             if (this.historyActive || !this.actors.size) return 0;
-            this.viewer.clock.multiplier = 30;
+            // this.viewer.clock.multiplier = 30;
             this.viewer.setPlayback(true);
             return duration;
         }
