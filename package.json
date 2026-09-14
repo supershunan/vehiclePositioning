@@ -1,0 +1,43 @@
+{
+    "name": "mine-motion-demo",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite --host",
+        "build": "vite build",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "preview": "vite preview --host",
+        "assets": "node scripts/generate-assets.mjs",
+        "sanitize:drone": "node scripts/sanitize-drone-glb.mjs"
+    },
+    "dependencies": {
+        "animate.css": "^4.1.1",
+        "cesium": "^1.130.0",
+        "dayjs": "^1.11.23",
+        "lucide-react": "^0.468.0",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
+        "rsuite": "^6.2.4"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^22.20.2",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^4.4.1",
+        "eslint": "^10.10.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-react-hooks": "^7.1.1",
+        "eslint-plugin-react-refresh": "^0.5.6",
+        "globals": "^17.12.0",
+        "prettier": "^3.9.6",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.70.0",
+        "vite": "^6.3.5"
+    }
+}

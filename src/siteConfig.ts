@@ -1,0 +1,127 @@
+import type { TrackingSceneConfig } from './tracking/types';
+import { drone, truck, truck2, worker, worker2 } from '../public/trajectory/historyList';
+
+/**
+ * 当前项目唯一的业务配置入口。
+ * 迁移到其他矿区时，通常只需替换这里的地形、底图、目标、模型和轨迹地址。
+ */
+export const siteConfig: TrackingSceneConfig = {
+    terrain: {
+        url: '/local-terrain/',
+        center: { longitude: 111.257515, latitude: 39.726906 },
+        sampleLevel: 14,
+    },
+    imageryUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
+    initialTargetId: 'MK-01',
+    camera: { range: 3600, topRange: 4800, orbitRange: 3800 },
+    targets: [
+        {
+            id: 'UAV-01',
+            name: '无人机 01 · 空中巡检',
+            kind: 'drone',
+            kindLabel: '无人机',
+            operatorLabel: '所属部门',
+            operator: '无人机巡检组',
+            area: '矿区巡检航线',
+            status: '空中巡检',
+            data: drone,
+            // height 表示相对整条航线最高地形点的高度，适合演示时避免穿山。
+            altitudeMode: 'relative-to-route-maximum',
+            model: {
+                uri: '/models/drone-cesium.glb',
+                scale: 10,
+                minimumPixelSize: 64,
+                maximumScale: 200,
+                headingOffsetRadians: -Math.PI / 2,
+                // 节点名必须与 GLB 内部名称完全一致；正负值模拟相邻旋翼反转。
+                nodeRotations: [
+                    { nodeName: 'Fan', axis: 'z', radiansPerSecond: 45 },
+                    { nodeName: 'Fan1', axis: 'z', radiansPerSecond: -45 },
+                    { nodeName: 'Fan2', axis: 'z', radiansPerSecond: 45 },
+                    { nodeName: 'Fan3', axis: 'z', radiansPerSecond: -45 },
+                ],
+            },
+            style: { color: '#386cd2', trailColor: '#669cff', icon: 'aircraft' },
+        },
+        {
+            id: 'MK-01',
+            name: '运输矿卡 01',
+            kind: 'vehicle',
+            kindLabel: '车辆',
+            operatorLabel: '驾驶人员',
+            operator: '王建国',
+            area: '二级运输平台',
+            status: '运输中',
+            data: truck,
+            altitudeMode: 'clamp-to-ground',
+            model: {
+                uri: '/models/truck.gltf',
+                scale: 4,
+                minimumPixelSize: 64,
+                maximumScale: 20,
+                headingOffsetRadians: -Math.PI / 2,
+            },
+            style: { color: '#846124', trailColor: '#f0c25d', icon: 'vehicle' },
+        },
+        {
+            id: 'MK-02',
+            name: '运输矿卡 02',
+            kind: 'vehicle',
+            kindLabel: '车辆',
+            operatorLabel: '驾驶人员',
+            operator: '王建国',
+            area: '二级运输平台',
+            status: '运输中',
+            data: truck2,
+            altitudeMode: 'clamp-to-ground',
+            model: {
+                uri: '/models/truck.gltf',
+                scale: 4,
+                minimumPixelSize: 64,
+                maximumScale: 20,
+                headingOffsetRadians: -Math.PI / 2,
+            },
+            style: { color: '#846124', trailColor: '#f0c25d', icon: 'vehicle' },
+        },
+        {
+            id: 'P-01',
+            name: '张明 · 安全巡检',
+            kind: 'person',
+            kindLabel: '人员',
+            operatorLabel: '所属部门',
+            operator: '安全管理部',
+            area: '二级运输平台',
+            status: '巡检中',
+            data: worker,
+            altitudeMode: 'clamp-to-ground',
+            model: {
+                uri: '/models/worker.gltf',
+                scale: 10,
+                minimumPixelSize: 48,
+                maximumScale: 60,
+                headingOffsetRadians: -Math.PI / 2,
+            },
+            style: { color: '#216e68', trailColor: '#54d6c2', icon: 'person' },
+        },
+        {
+            id: 'P-02',
+            name: '李华 · 安全巡检',
+            kind: 'person',
+            kindLabel: '人员',
+            operatorLabel: '所属部门',
+            operator: '安全管理部',
+            area: '二级运输平台',
+            status: '巡检中',
+            data: worker2,
+            altitudeMode: 'clamp-to-ground',
+            model: {
+                uri: '/models/worker.gltf',
+                scale: 10,
+                minimumPixelSize: 48,
+                maximumScale: 60,
+                headingOffsetRadians: -Math.PI / 2,
+            },
+            style: { color: '#216e68', trailColor: '#54d6c2', icon: 'person' },
+        },
+    ],
+};
