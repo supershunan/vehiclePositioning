@@ -2,7 +2,7 @@ export const drone = [
   {
     "longitude": 111.251,
     "latitude": 39.724,
-    "height": 100,
+    "height": 0,
     "timestamp": "2026-09-10T09:30:00+08:00"
   },
   {

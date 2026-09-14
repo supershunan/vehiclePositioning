@@ -10,6 +10,36 @@ import type {
 const EARTH_RADIUS = 6371008.8;
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const toDegrees = (radians: number) => (radians * 180) / Math.PI;
+const shortestTurn = (from: number, to: number) =>
+    Math.atan2(Math.sin(to - from), Math.cos(to - from));
+
+/** 在轨迹点前后各留一小段时间转向，避免分段航向在点位处跳变。 */
+function smoothHeading(samples: TrajectorySample[], low: number, seconds: number): number {
+    const current = samples[low];
+    const next = samples[low + 1];
+    const turnAt = (index: number, before: number, after: number) => {
+        const point = samples[index];
+        const window = Math.min(3, before / 2, after / 2);
+        if (window <= 0 || Math.abs(seconds - point.seconds) >= window) return undefined;
+        const fraction = (seconds - point.seconds + window) / (2 * window);
+        const eased = fraction * fraction * (3 - 2 * fraction);
+        const incoming = samples[index - 1].heading;
+        return incoming + shortestTurn(incoming, point.heading) * eased;
+    };
+    if (low > 0) {
+        const heading = turnAt(low, samples[low - 1].segmentDuration, current.segmentDuration);
+        if (heading !== undefined) return heading;
+    }
+    if (low + 2 < samples.length) {
+        const heading = turnAt(
+            low + 1,
+            next.seconds - current.seconds,
+            samples[low + 2].seconds - next.seconds
+        );
+        if (heading !== undefined) return heading;
+    }
+    return current.heading;
+}
 
 /**
  * 纯数学大圆计算，避免数据层依赖 Cesium。
@@ -172,7 +202,7 @@ export function trajectoryAt(track: TrajectoryTrack, seconds: number): Trajector
         longitude: position.longitude,
         latitude: position.latitude,
         height: a.height + (b.height - a.height) * fraction,
-        heading: geodesic.heading,
+        heading: smoothHeading(samples, low, seconds),
         speed: a.speed,
         distance: a.distance + a.segmentDistance * fraction,
         duration: (track.stopMs - track.startMs) / 1000,

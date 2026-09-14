@@ -39,6 +39,9 @@ export class CesiumTools {
     private readonly sources = new Map<string, HistoricalTrajectorySource>();
     private selected: string;
     private following = false;
+    private followHeading?: number;
+    private followRange?: number;
+    private followUpdatedAt?: number;
     private orbiting = false;
     private orbitHeading = 0;
     private showTrails = true;
@@ -128,6 +131,7 @@ export class CesiumTools {
                     )
                 );
             }
+            if (this.following) this.updateFollowCamera(seconds);
         };
         this.viewer.clock.onTick.addEventListener(listener);
         this.removeTick = () => this.viewer.clock.onTick.removeEventListener(listener);
@@ -138,7 +142,47 @@ export class CesiumTools {
         if (!actor) return;
         this.selected = id;
         this.onSelect(id);
-        if (this.following) this.viewer.trackedEntity = actor.entity;
+        if (this.following) {
+            this.followHeading = undefined;
+            this.followRange = undefined;
+            this.updateFollowCamera(this.elapsed(this.viewer.clock.currentTime));
+        }
+    }
+
+    /** 按轨迹航向从目标后方观察，转弯时沿最短角度平滑旋转。 */
+    private updateFollowCamera(seconds: number): void {
+        const actor = this.actors.get(this.selected);
+        const position = actor?.entity?.position?.getValue(this.viewer.clock.currentTime);
+        const viewFrom = actor?.entity?.viewFrom?.getValue(this.viewer.clock.currentTime);
+        if (!actor || !position || !viewFrom) return;
+        const now = performance.now();
+        const targetHeading = actor.stateAt(seconds).heading;
+        if (this.followHeading === undefined) {
+            this.followHeading = targetHeading;
+        } else {
+            const deltaSeconds = Math.min((now - (this.followUpdatedAt ?? now)) / 1000, 0.1);
+            const blend = 1 - Math.exp(-deltaSeconds / 0.25);
+            this.followHeading +=
+                Cesium.Math.negativePiToPi(targetHeading - this.followHeading) * blend;
+        }
+        this.followUpdatedAt = now;
+        const horizontalDistance = Math.hypot(viewFrom.x, viewFrom.y);
+        const defaultRange = Cesium.Cartesian3.magnitude(viewFrom);
+        if (this.followRange === undefined) {
+            this.followRange = defaultRange;
+        } else {
+            // Cesium 的滚轮缩放会改变当前局部相机距离；下次跟随更新沿用该距离。
+            const cameraRange = Cesium.Cartesian3.magnitude(this.viewer.camera.position);
+            if (Number.isFinite(cameraRange) && cameraRange > 1) this.followRange = cameraRange;
+        }
+        this.viewer.camera.lookAt(
+            position,
+            new Cesium.HeadingPitchRange(
+                this.followHeading,
+                -Math.atan2(viewFrom.z, horizontalDistance),
+                this.followRange
+            )
+        );
     }
 
     private home(top = false): void {
@@ -159,6 +203,9 @@ export class CesiumTools {
     }
 
     private releaseCamera(): void {
+        this.followHeading = undefined;
+        this.followRange = undefined;
+        this.followUpdatedAt = undefined;
         this.viewer.trackedEntity = undefined;
         this.viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
     }
@@ -183,7 +230,7 @@ export class CesiumTools {
                 this.orbiting = false;
                 this.releaseCamera();
                 if (this.following)
-                    this.viewer.trackedEntity = this.actors.get(this.selected)?.entity;
+                    this.updateFollowCamera(this.elapsed(this.viewer.clock.currentTime));
                 return this.following;
             },
             orbit: () => {
